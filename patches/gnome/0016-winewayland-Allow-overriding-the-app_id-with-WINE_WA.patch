@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Arthur S. Santos" <237346878+arthurffht@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 09:18:57 -0300
+Subject: [PATCH] winewayland: Allow overriding the app_id with
+ WINE_WAYLAND_APP_ID.
+
+The xdg_toplevel app_id defaults to the lowercase executable name,
+which desktop environments can't associate with the launcher's
+desktop entry. Let launchers such as Vinegar set it, so that GNOME
+shows Studio windows with Vinegar's name and icon.
+
+Signed-off-by: Arthur S. Santos <237346878+arthurffht@users.noreply.github.com>
+---
+ dlls/winewayland.drv/waylanddrv_main.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/dlls/winewayland.drv/waylanddrv_main.c b/dlls/winewayland.drv/waylanddrv_main.c
+index 275a390..6de2ec9 100644
+--- a/dlls/winewayland.drv/waylanddrv_main.c
++++ b/dlls/winewayland.drv/waylanddrv_main.c
+@@ -25,6 +25,7 @@
+ #include "config.h"
+ 
+ #include <stdlib.h>
++#include <string.h>
+ 
+ #include "ntstatus.h"
+ 
+@@ -67,6 +68,10 @@ static void wayland_init_process_name(void)
+     DWORD appnamez_size;
+     DWORD utf8_size;
+     int i;
++    const char *app_id = getenv("WINE_WAYLAND_APP_ID");
++
++    /* Allow launchers to associate windows with their desktop entry. */
++    if (app_id && *app_id && (process_name = strdup(app_id))) return;
+ 
+     appname = RtlGetCurrentPeb()->ProcessParameters->ImagePathName.Buffer;
+     if ((p = wcsrchr(appname, '/'))) appname = p + 1;
+-- 
+2.56.0
+
