@@ -7,9 +7,16 @@ otherwise non-existent on Windows. Some of these issues are caused by Wine itsel
 while others are bugs specific to a desktop environment or display server.
 
 At the time of writing this, Kombucha comes in four different flavors:
+* gnome
 * stable
 * unstable
 * proton-unstable
+
+"gnome" builds of Kombucha are the stable patchset built exclusively for Wayland,
+used by [Vinegar for GNOME](https://github.com/arthurffht/vinegar). Wine is built
+without X11 support (`--without-x`), the X11-specific patches are dropped, and the
+Wayland driver (`winewayland.drv`) is the default and only graphics driver. These
+are published as regular releases, so they are what Vinegar for GNOME downloads.
 
 "stable" builds of Kombucha are based on stable/development releases of Wine. These
 builds are intended for use in production.

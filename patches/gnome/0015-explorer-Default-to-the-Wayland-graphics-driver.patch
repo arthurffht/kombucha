@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Arthur S. Santos" <237346878+arthurffht@users.noreply.github.com>
+Date: Thu, 22 Oct 2026 23:13:02 -0300
+Subject: [PATCH] explorer: Default to the Wayland graphics driver.
+
+Kombucha for GNOME is built without X11 support, so the Wayland driver
+is the only graphics driver available; avoid probing for mac and x11.
+
+Signed-off-by: Arthur S. Santos <237346878+arthurffht@users.noreply.github.com>
+---
+ programs/explorer/desktop.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/programs/explorer/desktop.c b/programs/explorer/desktop.c
+index be4ce34..647a222 100644
+--- a/programs/explorer/desktop.c
++++ b/programs/explorer/desktop.c
+@@ -40,7 +40,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
+ #define DESKTOP_CLASS_ATOM ((LPCWSTR)MAKEINTATOM(32769))
+ #define DESKTOP_ALL_ACCESS 0x01ff
+ 
+-static const WCHAR default_driver[] = L"mac,x11,wayland";
++/* Kombucha for GNOME is built without X11 support: Studio is always
++ * rendered natively through the Wayland compositor. */
++static const WCHAR default_driver[] = L"wayland";
+ 
+ static BOOL using_root = TRUE;
+ 
+-- 
+2.56.0
+

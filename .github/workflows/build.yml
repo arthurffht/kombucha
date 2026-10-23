@@ -5,6 +5,7 @@ on:
       patchset:
         type: choice
         options:
+          - gnome
           - stable
           - unstable
           - proton-unstable
@@ -25,7 +26,7 @@ jobs:
       - name: Set Release Tag
         run: |
           case ${{ inputs.patchset }} in
-            stable)
+            stable|gnome)
               echo "TAG=${{ inputs.patchset }}+$(date --utc +%Y%m%d%H%M%S)" >> $GITHUB_ENV ;;
             *)
               echo "TAG=${{ inputs.patchset }}" >> $GITHUB_ENV
@@ -62,6 +63,7 @@ jobs:
             libxi-dev \
             libxkbcommon-dev \
             libxkbregistry-dev \
+            libegl-dev \
             libxrandr-dev \
             libxrender-dev \
             linux-headers-generic-6.14 \
@@ -108,7 +110,7 @@ jobs:
         working-directory: wine
         run: |
           case ${{ inputs.patchset }} in
-            stable|unstable)
+            stable|unstable|gnome)
               export x86_64_CC="ccache x86_64-w64-mingw32-clang"
               export x86_64_CCX="ccache x86_64-w64-mingw32-clang++"
               export CC="ccache clang"
@@ -130,7 +132,10 @@ jobs:
           export LDFLAGS="${x86_64_LDFLAGS} -Wl,-z,relro,-z,now"
           mkdir -p ${{ env.INSTALL }}
           [ ${{ inputs.patchset }} = proton-unstable ] && ./autogen.sh
-          ./configure \
+          # The GNOME flavor is Wayland-only: winex11 is not built at all.
+          EXTRA_FLAGS=""
+          [ ${{ inputs.patchset }} = gnome ] && EXTRA_FLAGS="--without-x --with-wayland"
+          ./configure ${EXTRA_FLAGS} \
             --disable-dxdiagn \
             --disable-mscoree \
             --disable-mshtml \
@@ -172,5 +177,13 @@ jobs:
               export WINE_VERSION="Wine"
           esac
 
-          [ ${{ inputs.patchset }} = unstable ] || [ ${{ inputs.patchset }} = proton-unstable ] && gh release delete --cleanup-tag "${TAG}"
-          gh release create --notes "Built from ${WINE_VERSION} commit ${{ inputs.commit }}." --prerelease --title "${TAG}" "${TAG}" "${NAME}.tar.xz"
+          case ${{ inputs.patchset }} in
+            unstable|proton-unstable)
+              gh release delete --yes --cleanup-tag "${TAG}" || true ;;
+          esac
+
+          # GNOME builds are published as full releases, making them the
+          # "latest" release that Vinegar for GNOME downloads by default.
+          PRERELEASE="--prerelease"
+          [ ${{ inputs.patchset }} = gnome ] && PRERELEASE=""
+          gh release create --notes "Built from ${WINE_VERSION} commit ${{ inputs.commit }}." ${PRERELEASE} --title "${TAG}" "${TAG}" "${NAME}.tar.xz"
